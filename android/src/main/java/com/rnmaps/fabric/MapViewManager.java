@@ -618,6 +618,25 @@ public class MapViewManager extends ViewGroupManager<MapView> implements RNMapsM
     @Override
     public void onDropViewInstance(MapView view) {
         super.onDropViewInstance(view);
-        view.onDestroy();
+        // Samsung Android 15 crash fix: wrap onDestroy in try-catch
+        try {
+            view.onDestroy();
+        } catch (NullPointerException e) {
+            String stackTrace = android.util.Log.getStackTraceString(e);
+            if (stackTrace.contains("com.google.android.gms.dynamic.DeferredLifecycleHelper") || 
+                stackTrace.contains("java.util.LinkedList.isEmpty") ||
+                stackTrace.contains("com.google.android.gms.maps.MapView")) {
+                android.util.Log.w("MapViewManager", "Samsung Android 15 MapView onDestroy crash prevented: " + e.getMessage(), e);
+            } else {
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            String stackTrace = android.util.Log.getStackTraceString(e);
+            if (stackTrace.contains("com.google.android.gms.dynamic.DeferredLifecycleHelper")) {
+                android.util.Log.w("MapViewManager", "Samsung Android 15 MapView RuntimeException during onDestroy prevented: " + e.getMessage(), e);
+            } else {
+                throw e;
+            }
+        }
     }
 }
