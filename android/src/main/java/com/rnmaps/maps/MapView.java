@@ -233,7 +233,28 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
         }
         synchronized (MapView.this) {
             if (!destroyed) {
-                MapView.this.onPause();
+                try {
+                    MapView.this.onPause();
+                } catch (NullPointerException e) {
+                    // Specifically catch Google Maps SDK crashes
+                    String stackTrace = android.util.Log.getStackTraceString(e);
+                    if (stackTrace.contains("com.google.android.gms") || 
+                        stackTrace.contains("com.google.maps.api.android.lib6")) {
+                        android.util.Log.w("MapView", "Google Maps SDK onPause crash prevented: " + e.getMessage(), e);
+                    } else {
+                        // Re-throw if it's not the known Google Maps issue
+                        throw e;
+                    }
+                } catch (RuntimeException e) {
+                    // Catch RuntimeException that might wrap the NullPointerException
+                    String stackTrace = android.util.Log.getStackTraceString(e);
+                    if (stackTrace.contains("com.google.android.gms") || 
+                        stackTrace.contains("com.google.maps.api.android.lib6")) {
+                        android.util.Log.w("MapView", "Google Maps SDK RuntimeException during onPause prevented: " + e.getMessage(), e);
+                    } else {
+                        throw e;
+                    }
+                }
             }
             paused = true;
         }
@@ -727,7 +748,32 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
             onPause();
             paused = true;
         }
-        onDestroy();
+        
+        // Wrap onDestroy in try-catch to prevent crashes from Google Maps SDK
+        try {
+            onDestroy();
+        } catch (NullPointerException e) {
+            // Specifically catch Google Maps SDK crashes
+            String stackTrace = android.util.Log.getStackTraceString(e);
+            if (stackTrace.contains("com.google.android.gms.dynamic.DeferredLifecycleHelper") || 
+                stackTrace.contains("com.google.android.gms.maps.MapView") ||
+                stackTrace.contains("java.util.LinkedList.isEmpty") ||
+                stackTrace.contains("java.util.AbstractCollection.isEmpty")) {
+                android.util.Log.w("MapView", "Google Maps SDK onDestroy crash prevented: " + e.getMessage(), e);
+            } else {
+                // Re-throw if it's not the known Google Maps issue
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            // Catch RuntimeException that might wrap the NullPointerException
+            String stackTrace = android.util.Log.getStackTraceString(e);
+            if (stackTrace.contains("com.google.android.gms.dynamic.DeferredLifecycleHelper") || 
+                stackTrace.contains("com.google.android.gms.maps.MapView")) {
+                android.util.Log.w("MapView", "Google Maps SDK RuntimeException during onDestroy prevented: " + e.getMessage(), e);
+            } else {
+                throw e;
+            }
+        }
     }
 
     public void setInitialCameraSet(boolean initialCameraSet) {
@@ -1177,6 +1223,10 @@ public class MapView extends com.google.android.gms.maps.MapView implements Goog
     }
 
     public View getFeatureAt(int index) {
+        // Clamp index to valid bounds to avoid IndexOutOfBoundsException.
+        if (index < 0 || index >= features.size()) {
+            return null;
+        }
         return features.get(index);
     }
 
