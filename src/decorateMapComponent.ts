@@ -163,6 +163,7 @@ export default function decorateMapComponent<Type extends Component>(
         components[key] = components.default;
       }
 
+      // @ts-ignore
       return components[key];
     };
 
@@ -173,6 +174,7 @@ export default function decorateMapComponent<Type extends Component>(
       this.context,
       componentName,
     );
+    // @ts-ignore
     return UIManager.getViewManagerConfig(nativeComponentName).Commands[name];
   };
 
