@@ -79,7 +79,9 @@ type NativeProps = Modify<MapOverlayProps, {image?: string}>;
 
 function normalizeBounds(bounds: [number, number][]): any {
   return {
+    // @ts-ignore
     northEast: {latitude: bounds[0][0], longitude: bounds[0][1]},
+    // @ts-ignore
     southWest: {latitude: bounds[1][0], longitude: bounds[1][1]},
   };
 }

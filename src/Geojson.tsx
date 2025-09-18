@@ -385,13 +385,16 @@ const makeOverlayForAnyPolygon = (
 ): Omit<AnyPolygonOverlay, 'type'> => {
   return {
     feature,
+    // @ts-ignore
     coordinates: coordinates[0],
     holes: coordinates.length > 1 ? coordinates.slice(1) : undefined,
   };
 };
 
 const makePoint = (c: Position): LatLng => ({
+  // @ts-ignore
   latitude: c[1],
+  // @ts-ignore
   longitude: c[0],
 });
 
